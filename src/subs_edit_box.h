@@ -204,6 +204,9 @@ class SubsEditBox final : public wxPanel {
 
 	/// Invalidate STT cache for the current line and re-transcribe
 	void InvalidateAndRetranscribe();
+	/// Debounce timer for STT retranscription during rapid timing commits
+	wxTimer stt_debounce_timer;
+	void OnSTTDebounceTimer(wxTimerEvent&);
 
 	SubsTextEditCtrl *edit_ctrl;
 	wxTextCtrl *secondary_editor;

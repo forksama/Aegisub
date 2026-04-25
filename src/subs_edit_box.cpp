@@ -242,6 +242,7 @@ SubsEditBox::SubsEditBox(wxWindow *parent, agi::Context *context)
 	Bind(wxEVT_CHAR_HOOK, &SubsEditBox::OnKeyDown, this);
 	Bind(wxEVT_SIZE, &SubsEditBox::OnSize, this);
 	Bind(wxEVT_TIMER, [this](wxTimerEvent&) { commit_id = -1; }, undo_timer.GetId());
+	Bind(wxEVT_TIMER, &SubsEditBox::OnSTTDebounceTimer, this, stt_debounce_timer.GetId());
 
 	wxSizeEvent evt;
 	OnSize(evt);
@@ -717,6 +718,11 @@ void SubsEditBox::InvalidateAndRetranscribe() {
 
 	c->sttService->InvalidateCache(line);
 	stt_editor->ChangeValue(_("Transcribing..."));
+	stt_debounce_timer.Start(500, wxTIMER_ONE_SHOT);
+}
+
+void SubsEditBox::OnSTTDebounceTimer(wxTimerEvent&) {
+	if (!line || !c->sttService || !edit_splitter->IsSplit()) return;
 
 	c->sttService->TranscribeAsync(line,
 		[this](std::string const& result) {
