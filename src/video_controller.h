@@ -37,8 +37,11 @@
 
 class AssDialogue;
 class AsyncVideoProvider;
+class TimeRange;
 struct SubtitlesProviderErrorEvent;
 struct VideoProviderErrorEvent;
+
+enum class VideoPlaybackRange;
 
 namespace agi {
 	struct Context;
@@ -109,6 +112,8 @@ class VideoController final : public wxEvtHandler {
 	void OnActiveLineChanged(AssDialogue *line);
 
 	void RequestFrame();
+	void PlayRange(TimeRange range);
+	void PlayLineRange(VideoPlaybackRange range);
 
 public:
 	VideoController(agi::Context *context);

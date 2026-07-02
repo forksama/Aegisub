@@ -42,6 +42,7 @@ tests_src = [
     'tests/type_name.cpp',
     'tests/util.cpp',
     'tests/uuencode.cpp',
+    'tests/video_playback_range.cpp',
     'tests/vfr.cpp',
     'tests/word_split.cpp',
 ]
