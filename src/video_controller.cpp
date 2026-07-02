@@ -38,12 +38,27 @@
 #include "project.h"
 #include "selection_controller.h"
 #include "time_range.h"
+#include "video_playback_range.h"
 #include "async_video_provider.h"
 #include "utils.h"
 
 #include <libaegisub/ass/time.h>
 
+#include <optional>
+
 #include <wx/log.h>
+
+namespace {
+std::optional<TimeRange> GetLinePlaybackBaseRange(agi::Context *context) {
+	if (context->audioController->GetTimingController())
+		return context->audioController->GetPrimaryPlaybackRange();
+
+	if (auto active_line = context->selectionController->GetActiveLine())
+		return TimeRange(active_line->Start, active_line->End);
+
+	return {};
+}
+}
 
 VideoController::VideoController(agi::Context *c)
 : context(c)
@@ -154,12 +169,15 @@ void VideoController::PlayLine() {
 	AssDialogue *curline = context->selectionController->GetActiveLine();
 	if (!curline) return;
 
-	context->audioController->PlayRange(TimeRange(curline->Start, curline->End));
+	PlayRange(TimeRange(curline->Start, curline->End));
+}
 
-	// Round-trip conversion to convert start to exact
-	int startFrame = FrameAtTime(context->selectionController->GetActiveLine()->Start, agi::vfr::START);
+void VideoController::PlayRange(TimeRange range) {
+	context->audioController->PlayRange(range);
+
+	int startFrame = FrameAtTime(range.begin(), agi::vfr::START);
 	start_ms = TimeAtFrame(startFrame);
-	end_frame = FrameAtTime(context->selectionController->GetActiveLine()->End, agi::vfr::END) + 1;
+	end_frame = FrameAtTime(range.end(), agi::vfr::END) + 1;
 
 	JumpToFrame(startFrame);
 
@@ -167,88 +185,29 @@ void VideoController::PlayLine() {
 	playback.Start(10);
 }
 
-void VideoController::PlayLineEnd() {
-    Stop();
+void VideoController::PlayLineRange(VideoPlaybackRange range) {
+	Stop();
 
-    AssDialogue *curline = context->selectionController->GetActiveLine();
-    if (!curline) return;
+	auto base_range = GetLinePlaybackBaseRange(context);
+	if (!base_range) return;
 
-    int end_time = curline->End;
-    int start_time = std::max(0, end_time - 500);
-    
-    context->audioController->PlayRange(TimeRange(start_time, end_time));
-
-    int startFrame = FrameAtTime(start_time, agi::vfr::START);
-    start_ms = TimeAtFrame(startFrame);
-    end_frame = FrameAtTime(end_time, agi::vfr::END) + 1;
-
-    JumpToFrame(startFrame);
-
-    playback_start_time = std::chrono::steady_clock::now();
-    playback.Start(10);
+	PlayRange(GetVideoPlaybackRange(*base_range, range));
 }
 
 void VideoController::PlayLineBegin() {
-    Stop();
+	PlayLineRange(VideoPlaybackRange::Begin);
+}
 
-    AssDialogue *curline = context->selectionController->GetActiveLine();
-    if (!curline) return;
-
-    int start_time = curline->Start;
-    int end_time = std::min(static_cast<int>(curline->End), start_time + 500);
-    
-    context->audioController->PlayRange(TimeRange(start_time, end_time));
-
-    int startFrame = FrameAtTime(start_time, agi::vfr::START);
-    start_ms = TimeAtFrame(startFrame);
-    end_frame = FrameAtTime(end_time, agi::vfr::END) + 1;
-
-    JumpToFrame(startFrame);
-
-    playback_start_time = std::chrono::steady_clock::now();
-    playback.Start(10);
+void VideoController::PlayLineEnd() {
+	PlayLineRange(VideoPlaybackRange::End);
 }
 
 void VideoController::PlayLineBefore() {
-    Stop();
-
-    AssDialogue *curline = context->selectionController->GetActiveLine();
-    if (!curline) return;
-
-    int end_time = curline->Start;
-    int start_time = std::max(0, end_time - 500);
-    
-    context->audioController->PlayRange(TimeRange(start_time, end_time));
-
-    int startFrame = FrameAtTime(start_time, agi::vfr::START);
-    start_ms = TimeAtFrame(startFrame);
-    end_frame = FrameAtTime(end_time, agi::vfr::END) + 1;
-
-    JumpToFrame(startFrame);
-
-    playback_start_time = std::chrono::steady_clock::now();
-    playback.Start(10);
+	PlayLineRange(VideoPlaybackRange::Before);
 }
 
 void VideoController::PlayLineAfter() {
-    Stop();
-
-    AssDialogue *curline = context->selectionController->GetActiveLine();
-    if (!curline) return;
-
-    int start_time = curline->End;
-    int end_time = start_time + 500;
-    
-    context->audioController->PlayRange(TimeRange(start_time, end_time));
-
-    int startFrame = FrameAtTime(start_time, agi::vfr::START);
-    start_ms = TimeAtFrame(startFrame);
-    end_frame = FrameAtTime(end_time, agi::vfr::END) + 1;
-
-    JumpToFrame(startFrame);
-
-    playback_start_time = std::chrono::steady_clock::now();
-    playback.Start(10);
+	PlayLineRange(VideoPlaybackRange::After);
 }
 
 void VideoController::Stop() {
