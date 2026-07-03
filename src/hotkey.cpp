@@ -57,6 +57,14 @@ namespace {
 		{nullptr}
 	};
 
+	const char *added_hotkeys_video_play_line_sub[][3] = {
+		{"video/play/line/before", "Default", "Q"},
+		{"video/play/line/after", "Default", "W"},
+		{"video/play/line/begin", "Default", "E"},
+		{"video/play/line/end", "Default", "D"},
+		{nullptr}
+	};
+
 #ifdef __WXMAC__
 	const char *added_hotkeys_minimize[][3] = {
 		{"app/minimize", "Default", "Ctrl-M"},
@@ -141,6 +149,11 @@ void init() {
 	if (boost::find(migrations, "am/stt/append") == end(migrations)) {
 		migrate_hotkeys(added_hotkeys_stt_append);
 		migrations.emplace_back("am/stt/append");
+	}
+
+	if (boost::find(migrations, "video/play/line/sub") == end(migrations)) {
+		migrate_hotkeys(added_hotkeys_video_play_line_sub);
+		migrations.emplace_back("video/play/line/sub");
 	}
 
 	OPT_SET("App/Hotkey Migrations")->SetListString(std::move(migrations));

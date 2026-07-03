@@ -53,16 +53,16 @@
 			"Space"
 		],
 		"audio/play/selection/after" : [
-			"W"
+			"U"
 		],
 		"audio/play/selection/before" : [
-			"Q"
+			"Y"
 		],
 		"audio/play/selection/begin" : [
-			"E"
+			"I"
 		],
 		"audio/play/selection/end" : [
-			"D"
+			"K"
 		],
 		"audio/play/to_end" : [
 			"T"
@@ -212,6 +212,18 @@
 		],
 		"video/play" : [
 			"Ctrl-P"
+		],
+		"video/play/line/before" : [
+			"Q"
+		],
+		"video/play/line/after" : [
+			"W"
+		],
+		"video/play/line/begin" : [
+			"E"
+		],
+		"video/play/line/end" : [
+			"D"
 		],
 		"video/zoom/in" : [
 			"Ctrl-KP_Add"
